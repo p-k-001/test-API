@@ -25,7 +25,7 @@ jobs:
         run: npm install -g newman-reporter-html
 
       - name: Run API Tests
-        run: newman run postman-tests/User-API-tst.postman_collection.json -e postman-tests/local-environment.json -r html --reporter-html-export "./reports/test-report.html"
+        run: newman run postman-tests/User-API-tst.postman_collection.json -e postman-tests/local-environment.json
 
   deploy:
     needs: test # Run deployment only if tests pass
