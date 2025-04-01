@@ -21,6 +21,9 @@ jobs:
       - name: Install Newman
         run: npm install -g newman
 
+      - name: Install Newman html reporter
+        run: npm install -g newman-reporter-html
+
       - name: Run API Tests
         run: newman run postman-tests/User-API-tst.postman_collection.json -r html --reporter-html-export "./reports/test-report.html"
 
