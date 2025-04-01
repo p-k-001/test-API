@@ -3,7 +3,7 @@ name: Test and Deploy to Render
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   test:
@@ -16,7 +16,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install Newman
         run: npm install -g newman
@@ -25,7 +25,7 @@ jobs:
         run: newman run postman-tests/User-API-tst.postman_collection.json -e tests/environment.json
 
   deploy:
-    needs: test  # Run deployment only if tests pass
+    needs: test # Run deployment only if tests pass
     runs-on: ubuntu-latest
 
     steps:
