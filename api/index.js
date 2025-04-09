@@ -14,25 +14,25 @@ let users = [
   { id: 2, name: "Jane Smith", email: "jane@example.com" },
 ];
 
-// GET /api/hello
-app.get("/api/hello", (req, res) => {
+// GET /hello
+app.get("/hello", (req, res) => {
   res.json({ message: "Hello, API Testing!" });
 });
 
-// GET /api/users
-app.get("/api/users", (req, res) => {
+// GET /users
+app.get("/users", (req, res) => {
   res.json(users);
 });
 
-// GET /api/users/:id
-app.get("/api/users/:id", (req, res) => {
+// GET /users/:id
+app.get("/users/:id", (req, res) => {
   const user = users.find((user) => user.id === parseInt(req.params.id));
   if (!user) return res.status(404).json({ message: "User not found" });
   res.json(user);
 });
 
-// POST /api/users
-app.post("/api/users", (req, res) => {
+// POST /users
+app.post("/users", (req, res) => {
   console.log(users[users.length - 1].id);
   const newUser = {
     id: users[users.length - 1].id + 1,
@@ -43,8 +43,8 @@ app.post("/api/users", (req, res) => {
   res.status(201).json(newUser);
 });
 
-// PUT /api/users/:id
-app.put("/api/users/:id", (req, res) => {
+// PUT /users/:id
+app.put("/users/:id", (req, res) => {
   const user = users.find((u) => u.id === parseInt(req.params.id));
   if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -54,8 +54,8 @@ app.put("/api/users/:id", (req, res) => {
   res.json(user);
 });
 
-// DELETE /api/users/:id
-app.delete("/api/users/:id", (req, res) => {
+// DELETE /users/:id
+app.delete("/users/:id", (req, res) => {
   const userIndex = users.findIndex((u) => u.id === parseInt(req.params.id));
   if (userIndex === -1)
     return res.status(404).json({ message: "User not found" });
@@ -68,3 +68,5 @@ app.delete("/api/users/:id", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running at port ${PORT}`);
 });
+
+module.exports = app;
