@@ -3,10 +3,11 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
+const FRONTEND_URL = process.env.FRONTEND_URL;
 
 app.use(bodyParser.json());
-app.use(cors());
+app.use(cors({ origin: "http://localhost:5173" }));
 
 let users = [
   { id: 1, name: "John Doe", email: "john@example.com" },
@@ -32,8 +33,9 @@ app.get("/api/users/:id", (req, res) => {
 
 // POST /api/users
 app.post("/api/users", (req, res) => {
+  console.log(users[users.length - 1].id);
   const newUser = {
-    id: users.length + 1,
+    id: users[users.length - 1].id + 1,
     name: req.body.name,
     email: req.body.email,
   };
@@ -63,6 +65,6 @@ app.delete("/api/users/:id", (req, res) => {
 });
 
 // Start server
-app.listen(port, () => {
-  console.log(`Server is running at port ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server is running at port ${PORT}`);
 });
