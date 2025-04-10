@@ -6,6 +6,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
+// TODO: refaktor na pouziti .env na testu a produkci
+
 app.use(bodyParser.json());
 app.use(cors({ origin: "http://localhost:5173" }));
 
