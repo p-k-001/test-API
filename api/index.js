@@ -11,7 +11,7 @@ const allowedOrigins = [
 ];
 
 app.use(bodyParser.json());
-app.use(cors({ origin: allowedOrigins }));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 
 let users = [
   { id: 1, name: "John Doe", email: "john@example.com" },
