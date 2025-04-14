@@ -4,12 +4,14 @@ const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const FRONTEND_URL = process.env.FRONTEND_URL;
 
-// TODO: refaktor na pouziti .env na testu a produkci
+const allowedOrigins = [
+  "https://localhost:5173",
+  "https://test-api-ui-teal.vercel.app/",
+];
 
 app.use(bodyParser.json());
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: allowedOrigins }));
 
 let users = [
   { id: 1, name: "John Doe", email: "john@example.com" },
