@@ -27,8 +27,24 @@ jobs:
       - name: Install Newman html reporter
         run: npm install -g newman-reporter-html
 
-      - name: Run API Tests
+      - name: Run Postman API Tests
         run: newman run postman-tests/User-API-tst.postman_collection.json -e postman-tests/prod-environment.json
+
+      - name: Install Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "11"
+
+      - name: Download SoapUI
+        run: |
+          wget https://s3.amazonaws.com/downloads.eviware/soapuios/5.7.0/SoapUI-5.7.0-linux-bin.tar.gz
+          tar -xzf SoapUI-5.7.0-linux-bin.tar.gz
+          mv SoapUI-5.7.0 soapui
+
+      - name: Run SoapUI tests
+        run: |
+          ./soapui/bin/testrunner.sh -r -j -f reports/ soapui-tests/REST-Project-1-soapui-project.xml
 
   deploy:
     needs: test # Run deployment only if tests pass
