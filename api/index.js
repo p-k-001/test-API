@@ -1,6 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const swaggerUi = require("swagger-ui-express");
+const swaggerJsdoc = require("swagger-jsdoc");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,6 +12,20 @@ const allowedOrigins = [
   "https://test-api-ui-teal.vercel.app",
 ];
 
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "My API",
+      version: "1.0.0",
+    },
+  },
+  apis: ["./api/**/*.js"],
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use(bodyParser.json());
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 
@@ -18,24 +34,81 @@ let users = [
   { id: 2, name: "Jane Smith", email: "jane@example.com" },
 ];
 
-// GET /hello
+/**
+ * @openapi
+ * /hello:
+ *   get:
+ *     summary: testing service
+ *     responses:
+ *       200:
+ *         description: returns greeting
+ */
 app.get("/hello", (req, res) => {
   res.json({ message: "Hello, API Testing!" });
 });
 
-// GET /users
+/**
+ * @openapi
+ * /users:
+ *   get:
+ *     summary: Get all users
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 app.get("/users", (req, res) => {
   res.json(users);
 });
 
-// GET /users/:id
+/**
+ * @openapi
+ * /users/{id}:
+ *   get:
+ *     summary: Get a user by ID
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID of the user
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: User found
+ *       404:
+ *         description: User not found
+ */
 app.get("/users/:id", (req, res) => {
   const user = users.find((user) => user.id === parseInt(req.params.id));
   if (!user) return res.status(404).json({ message: "User not found" });
   res.json(user);
 });
 
-// POST /users
+/**
+ * @openapi
+ * /users:
+ *   post:
+ *     summary: Create a new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User created
+ *       400:
+ *         description: Invalid input
+ */
 app.post("/users", (req, res) => {
   console.log(users[users.length - 1].id);
   const newUser = {
@@ -47,7 +120,34 @@ app.post("/users", (req, res) => {
   res.status(201).json(newUser);
 });
 
-// PUT /users/:id
+/**
+ * @openapi
+ * /users/{id}:
+ *   put:
+ *     summary: Update user details
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User updated
+ *       404:
+ *         description: User not found
+ */
 app.put("/users/:id", (req, res) => {
   const user = users.find((u) => u.id === parseInt(req.params.id));
   if (!user) return res.status(404).json({ message: "User not found" });
@@ -58,7 +158,23 @@ app.put("/users/:id", (req, res) => {
   res.json(user);
 });
 
-// DELETE /users/:id
+/**
+ * @openapi
+ * /users/{id}:
+ *   delete:
+ *     summary: Delete a user
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       204:
+ *         description: User deleted
+ *       404:
+ *         description: User not found
+ */
 app.delete("/users/:id", (req, res) => {
   const userIndex = users.findIndex((u) => u.id === parseInt(req.params.id));
   if (userIndex === -1)
