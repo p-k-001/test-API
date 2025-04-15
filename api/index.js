@@ -12,6 +12,9 @@ const allowedOrigins = [
   "https://test-api-ui-teal.vercel.app",
 ];
 
+app.use(bodyParser.json());
+app.use(cors({ origin: allowedOrigins, credentials: true }));
+
 const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
@@ -24,10 +27,10 @@ const swaggerOptions = {
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-app.use(bodyParser.json());
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.get("/api-docs/swagger.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
 
 let users = [
   { id: 1, name: "John Doe", email: "john@example.com" },
