@@ -113,9 +113,11 @@ app.get("/users/:id", (req, res) => {
  *         description: Invalid input
  */
 app.post("/users", (req, res) => {
-  console.log(users[users.length - 1].id);
+  const id = users.length > 0 ? users[users.length - 1].id + 1 : 1;
+
+  console.log(id);
   const newUser = {
-    id: users[users.length - 1].id + 1,
+    id: id,
     name: req.body.name,
     email: req.body.email,
   };
