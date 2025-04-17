@@ -54,9 +54,9 @@
 							"    pm.response.to.have.status(200);\r",
 							"});\r",
 							"\r",
-							"pm.test(\"Response is array with length 2\", () => {\r",
+							"pm.test(\"Response is array with length 0\", () => {\r",
 							"    const response = pm.response.json();\r",
-							"    pm.expect(response).to.be.an(\"array\").and.have.lengthOf(2)\r",
+							"    pm.expect(response).to.be.an(\"array\").and.have.lengthOf(0)\r",
 							"})"
 						],
 						"type": "text/javascript",
@@ -81,6 +81,20 @@
 		},
 		{
 			"name": "users/:id",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status is 404\", () => {\r",
+							"    pm.response.to.have.status(404);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -99,6 +113,22 @@
 		},
 		{
 			"name": "users",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"User was saved\", function () {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response).to.have.property(\"name\", \"Alice Johnson\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
 			"request": {
 				"method": "POST",
 				"header": [
@@ -131,6 +161,56 @@
 		},
 		{
 			"name": "users/:id",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"User was saved\", function () {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response).to.have.property(\"name\", \"Alice Johnson\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/users/1",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"users",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "users/:id",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"User was saved\", function () {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response).to.have.property(\"name\", \"John Updated\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
 			"request": {
 				"method": "PUT",
 				"header": [
@@ -168,13 +248,49 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "{{base_url}}/users/3",
+					"raw": "{{base_url}}/users/1",
 					"host": [
 						"{{base_url}}"
 					],
 					"path": [
 						"users",
-						"3"
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "users",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status is 200\", () => {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response is array with length 0\", () => {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response).to.be.an(\"array\").and.have.lengthOf(0)\r",
+							"})"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/users",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"users"
 					]
 				}
 			},
