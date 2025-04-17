@@ -44,7 +44,7 @@ jobs:
 
       - name: Run SoapUI tests
         run: |
-          ./soapui/bin/testrunner.sh -r -j -f reports/ soapui-tests/REST-Project-1-soapui-project.xml
+          ./soapui/bin/testrunner.sh -r -j -f reports/ soapui-tests/Project-2-soapui-project.xml
 
   deploy:
     needs: test # Run deployment only if tests pass
