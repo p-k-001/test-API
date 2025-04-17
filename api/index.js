@@ -189,6 +189,20 @@ app.delete("/users/:id", (req, res) => {
   res.status(204).send();
 });
 
+/**
+ * @openapi
+ * /users:
+ *   delete:
+ *     summary: Delete all users
+ *     responses:
+ *       204:
+ *         description: All users deleted
+ */
+app.delete("/users", (req, res) => {
+  users = [];
+  res.status(204).send();
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server is running at port ${PORT}`);
