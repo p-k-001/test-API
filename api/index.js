@@ -33,8 +33,9 @@ app.get("/api-docs/swagger.json", (req, res) => {
 });
 
 let users = [
-  // { id: 1, name: "John Doe", email: "john@example.com" },
-  // { id: 2, name: "Jane Smith", email: "jane@example.com" },
+  // { id: 1, name: "John Doe", email: "john@example.com", role: "admin" },
+  // { id: 2, name: "Jane Smith", email: "jane@example.com", role: "guest" },
+  // { id: 2, name: "Adam Black", email: "adam@example.com", role: "user" },
 ];
 
 /**
@@ -101,10 +102,13 @@ app.get("/users/:id", (req, res) => {
  *             required:
  *               - name
  *               - email
+ *               - role
  *             properties:
  *               name:
  *                 type: string
  *               email:
+ *                 type: string
+ *               role:
  *                 type: string
  *     responses:
  *       201:
@@ -120,6 +124,7 @@ app.post("/users", (req, res) => {
     id: id,
     name: req.body.name,
     email: req.body.email,
+    role: req.body.role,
   };
   users.push(newUser);
   res.status(201).json(newUser);
@@ -147,6 +152,8 @@ app.post("/users", (req, res) => {
  *                 type: string
  *               email:
  *                 type: string
+ *               role:
+ *                 type: string
  *     responses:
  *       200:
  *         description: User updated
@@ -159,6 +166,7 @@ app.put("/users/:id", (req, res) => {
 
   user.name = req.body.name || user.name;
   user.email = req.body.email || user.email;
+  user.role = req.body.role || user.role;
 
   res.json(user);
 });
