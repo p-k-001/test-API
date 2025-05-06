@@ -34,7 +34,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: "temurin"
-          java-version: "11"
+          java-version: "21"
 
       - name: Download SoapUI
         run: |
@@ -45,6 +45,22 @@ jobs:
       - name: Run SoapUI tests
         run: |
           ./soapui/bin/testrunner.sh -r -j -f reports/ soapui-tests/Project-2-soapui-project.xml
+
+      - name: Checkout Test Repo
+        uses: actions/checkout@v3
+        with:
+          repository: p-k-001/test-API-REST-assured
+          path: rest-tests
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Maven
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y maven
+
+      - name: Run REST-Assured Tests
+        working-directory: rest-tests
+        run: mvn clean test
 
   deploy:
     needs: test # Run deployment only if tests pass
