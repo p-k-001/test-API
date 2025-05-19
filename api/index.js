@@ -32,6 +32,8 @@ app.get("/api-docs/swagger.json", (req, res) => {
   res.send(swaggerSpec);
 });
 
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 let users = [
   // { id: 1, name: "John Doe", email: "john@example.com", role: "admin" },
   // { id: 2, name: "Jane Smith", email: "jane@example.com", role: "guest" },
