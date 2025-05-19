@@ -122,7 +122,7 @@ app.get("/users/:id", (req, res) => {
  *         description: Invalid input
  */
 app.post("/users", (req, res) => {
-  const id = users.length > 0 ? users[users.length - 1].id + 1 : 1;
+  const id = getNextId();
 
   console.log(id);
   const newUser = {
@@ -219,6 +219,23 @@ app.delete("/users", (req, res) => {
   users = [];
   res.status(204).send();
 });
+
+/**
+ * @openapi
+ * /users:
+ *   get:
+ *     summary: Get next id
+ *     responses:
+ *       200:
+ *         description: Success
+ */
+app.get("/next-id", (req, res) => {
+  res.json({ "next-id": getNextId() });
+});
+
+const getNextId = () => {
+  return users.length > 0 ? users[users.length - 1].id + 1 : 1;
+};
 
 // Start server
 app.listen(PORT, () => {
