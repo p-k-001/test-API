@@ -157,7 +157,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"name\": \"Alice Johnson\",\r\n  \"email\": \"alice@example.com\"\r\n}\r\n",
+					"raw": "{\r\n  \"name\": \"Alice Johnson\",\r\n  \"email\": \"alice@example.com\",\r\n  \"age\": 18,\r\n  \"role\": \"admin\"\r\n}\r\n",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -272,42 +272,6 @@
 					"path": [
 						"users",
 						"1"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "users",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Response status is 200\", () => {\r",
-							"    pm.response.to.have.status(200);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Response is array with length 0\", () => {\r",
-							"    const response = pm.response.json();\r",
-							"    pm.expect(response).to.be.an(\"array\").and.have.lengthOf(0)\r",
-							"})"
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/users",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"users"
 					]
 				}
 			},

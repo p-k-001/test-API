@@ -34,13 +34,21 @@
                 "type": "object",
                 "required": [
                   "name",
-                  "email"
+                  "email",
+                  "age",
+                  "role"
                 ],
                 "properties": {
                   "name": {
                     "type": "string"
                   },
                   "email": {
+                    "type": "string"
+                  },
+                  "age": {
+                    "type": "integer"
+                  },
+                  "role": {
                     "type": "string"
                   }
                 }
@@ -54,6 +62,14 @@
           },
           "400": {
             "description": "Invalid input"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete all users",
+        "responses": {
+          "204": {
+            "description": "All users deleted"
           }
         }
       }
@@ -104,6 +120,12 @@
                     "type": "string"
                   },
                   "email": {
+                    "type": "string"
+                  },
+                  "age": {
+                    "type": "integer"
+                  },
+                  "role": {
                     "type": "string"
                   }
                 }

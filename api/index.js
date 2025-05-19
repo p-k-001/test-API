@@ -35,9 +35,9 @@ app.get("/api-docs/swagger.json", (req, res) => {
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 let users = [
-  // { id: 1, name: "John Doe", email: "john@example.com", role: "admin" },
-  // { id: 2, name: "Jane Smith", email: "jane@example.com", role: "guest" },
-  // { id: 2, name: "Adam Black", email: "adam@example.com", role: "user" },
+  // { id: 1, name: "John Doe", email: "john@example.com", age: 20, role: "admin" },
+  // { id: 2, name: "Jane Smith", email: "jane@example.com", age: 31, role: "guest" },
+  // { id: 2, name: "Adam Black", email: "adam@example.com", age: 15, role: "user" },
 ];
 
 /**
@@ -104,12 +104,15 @@ app.get("/users/:id", (req, res) => {
  *             required:
  *               - name
  *               - email
+ *               - age
  *               - role
  *             properties:
  *               name:
  *                 type: string
  *               email:
  *                 type: string
+ *               age:
+ *                 type: integer
  *               role:
  *                 type: string
  *     responses:
@@ -126,6 +129,7 @@ app.post("/users", (req, res) => {
     id: id,
     name: req.body.name,
     email: req.body.email,
+    age: req.body.age,
     role: req.body.role,
   };
   users.push(newUser);
@@ -154,6 +158,8 @@ app.post("/users", (req, res) => {
  *                 type: string
  *               email:
  *                 type: string
+ *               age:
+ *                 type: integer
  *               role:
  *                 type: string
  *     responses:
@@ -168,6 +174,7 @@ app.put("/users/:id", (req, res) => {
 
   user.name = req.body.name || user.name;
   user.email = req.body.email || user.email;
+  user.age = req.body.age || user.age;
   user.role = req.body.role || user.role;
 
   res.json(user);
