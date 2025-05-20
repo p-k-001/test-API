@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
+const { body, validationResult } = require("express-validator");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -61,6 +62,24 @@ app.get("/hello", (req, res) => {
  *     responses:
  *       200:
  *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   name:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   age:
+ *                     type: integer
+ *                   role:
+ *                     type: string
+ *                     enum: [admin, user]
  */
 app.get("/users", (req, res) => {
   res.json(users);
@@ -81,8 +100,32 @@ app.get("/users", (req, res) => {
  *     responses:
  *       200:
  *         description: User found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 age:
+ *                   type: integer
+ *                 role:
+ *                   type: string
+ *                   enum: [admin, user]
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
  */
 app.get("/users/:id", (req, res) => {
   const user = users.find((user) => user.id === parseInt(req.params.id));
@@ -109,32 +152,93 @@ app.get("/users/:id", (req, res) => {
  *             properties:
  *               name:
  *                 type: string
+ *                 description: User's full name
  *               email:
  *                 type: string
+ *                 format: email
+ *                 description: User's email address
  *               age:
  *                 type: integer
+ *                 minimum: 0
+ *                 maximum: 125
+ *                 description: User's age (0-125)
  *               role:
  *                 type: string
+ *                 enum: [admin, user]
+ *                 description: User's role (must be either admin or user)
  *     responses:
  *       201:
  *         description: User created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 age:
+ *                   type: integer
+ *                 role:
+ *                   type: string
  *       400:
  *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       msg:
+ *                         type: string
+ *                       param:
+ *                         type: string
+ *                       location:
+ *                         type: string
  */
-app.post("/users", (req, res) => {
-  const id = getNextId();
+app.post(
+  "/users",
+  [
+    body("name").isString().notEmpty().withMessage("Name is required"),
+    body("email")
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Valid email format is required"),
+    body("age")
+      .isInt({ min: 0, max: 125 })
+      .withMessage("Age must be between 0 and 125"),
+    body("role")
+      .isIn(["admin", "user"])
+      .withMessage("Role must be admin or user"),
+  ],
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-  console.log(id);
-  const newUser = {
-    id: id,
-    name: req.body.name,
-    email: req.body.email,
-    age: req.body.age,
-    role: req.body.role,
-  };
-  users.push(newUser);
-  res.status(201).json(newUser);
-});
+    const id = getNextId();
+
+    console.log("next-id: " + id);
+    const newUser = {
+      id: id,
+      name: req.body.name,
+      email: req.body.email,
+      age: req.body.age,
+      role: req.body.role,
+    };
+    users.push(newUser);
+    res.status(201).json(newUser);
+  }
+);
 
 /**
  * @openapi
@@ -153,32 +257,108 @@ app.post("/users", (req, res) => {
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - age
+ *               - role
  *             properties:
  *               name:
  *                 type: string
+ *                 description: User's full name
  *               email:
  *                 type: string
+ *                 format: email
+ *                 description: User's email address
  *               age:
  *                 type: integer
+ *                 minimum: 0
+ *                 maximum: 125
+ *                 description: User's age (0-125)
  *               role:
  *                 type: string
+ *                 enum: [admin, user]
+ *                 description: User's role (must be either admin or user)
  *     responses:
  *       200:
  *         description: User updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 age:
+ *                   type: integer
+ *                 role:
+ *                   type: string
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       msg:
+ *                         type: string
+ *                       param:
+ *                         type: string
+ *                       location:
+ *                         type: string
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
  */
-app.put("/users/:id", (req, res) => {
-  const user = users.find((u) => u.id === parseInt(req.params.id));
-  if (!user) return res.status(404).json({ message: "User not found" });
+app.put(
+  "/users/:id",
+  [
+    body("name").isString().notEmpty().withMessage("Name is required"),
+    body("email")
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Valid email format is required"),
+    body("age")
+      .isInt({ min: 0, max: 125 })
+      .withMessage("Age must be between 0 and 125"),
+    body("role")
+      .isIn(["admin", "user"])
+      .withMessage("Role must be admin or user"),
+  ],
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-  user.name = req.body.name || user.name;
-  user.email = req.body.email || user.email;
-  user.age = req.body.age || user.age;
-  user.role = req.body.role || user.role;
+    const user = users.find((u) => u.id === parseInt(req.params.id));
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  res.json(user);
-});
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    user.age = req.body.age || user.age;
+    user.role = req.body.role || user.role;
+
+    res.json(user);
+  }
+);
 
 /**
  * @openapi
@@ -196,6 +376,14 @@ app.put("/users/:id", (req, res) => {
  *         description: User deleted
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
  */
 app.delete("/users/:id", (req, res) => {
   const userIndex = users.findIndex((u) => u.id === parseInt(req.params.id));
@@ -222,12 +410,19 @@ app.delete("/users", (req, res) => {
 
 /**
  * @openapi
- * /users:
+ * /next-id:
  *   get:
  *     summary: Get next id
  *     responses:
  *       200:
  *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 next-id:
+ *                   type: integer
  */
 app.get("/next-id", (req, res) => {
   res.json({ "next-id": getNextId() });

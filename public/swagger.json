@@ -20,7 +20,38 @@
         "summary": "Get all users",
         "responses": {
           "200": {
-            "description": "Success"
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      },
+                      "age": {
+                        "type": "integer"
+                      },
+                      "role": {
+                        "type": "string",
+                        "enum": [
+                          "admin",
+                          "user"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -40,16 +71,27 @@
                 ],
                 "properties": {
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "User's full name"
                   },
                   "email": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "email",
+                    "description": "User's email address"
                   },
                   "age": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 125,
+                    "description": "User's age (0-125)"
                   },
                   "role": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                      "admin",
+                      "user"
+                    ],
+                    "description": "User's role (must be either admin or user)"
                   }
                 }
               }
@@ -58,10 +100,60 @@
         },
         "responses": {
           "201": {
-            "description": "User created"
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "age": {
+                      "type": "integer"
+                    },
+                    "role": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Invalid input"
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "msg": {
+                            "type": "string"
+                          },
+                          "param": {
+                            "type": "string"
+                          },
+                          "location": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -90,10 +182,51 @@
         ],
         "responses": {
           "200": {
-            "description": "User found"
+            "description": "User found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "age": {
+                      "type": "integer"
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "admin",
+                        "user"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
           },
           "404": {
-            "description": "User not found"
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -115,18 +248,35 @@
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "age",
+                  "role"
+                ],
                 "properties": {
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "User's full name"
                   },
                   "email": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "email",
+                    "description": "User's email address"
                   },
                   "age": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 125,
+                    "description": "User's age (0-125)"
                   },
                   "role": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                      "admin",
+                      "user"
+                    ],
+                    "description": "User's role (must be either admin or user)"
                   }
                 }
               }
@@ -135,10 +285,76 @@
         },
         "responses": {
           "200": {
-            "description": "User updated"
+            "description": "User updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "age": {
+                      "type": "integer"
+                    },
+                    "role": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "msg": {
+                            "type": "string"
+                          },
+                          "param": {
+                            "type": "string"
+                          },
+                          "location": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "404": {
-            "description": "User not found"
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User not found"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -159,7 +375,42 @@
             "description": "User deleted"
           },
           "404": {
-            "description": "User not found"
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/next-id": {
+      "get": {
+        "summary": "Get next id",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "next-id": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
