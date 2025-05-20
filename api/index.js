@@ -80,6 +80,9 @@ app.get("/hello", (req, res) => {
  *                   role:
  *                     type: string
  *                     enum: [admin, user]
+ *                   adult:
+ *                     type: boolean
+ *                     description: Whether the user is an adult (18+)
  */
 app.get("/users", (req, res) => {
   res.json(users);
@@ -116,6 +119,9 @@ app.get("/users", (req, res) => {
  *                 role:
  *                   type: string
  *                   enum: [admin, user]
+ *                 adult:
+ *                   type: boolean
+ *                   description: Whether the user is an adult (18+)
  *       404:
  *         description: User not found
  *         content:
@@ -184,6 +190,9 @@ app.get("/users/:id", (req, res) => {
  *                   type: integer
  *                 role:
  *                   type: string
+ *                 adult:
+ *                   type: boolean
+ *                   description: Whether the user is an adult (18+)
  *       400:
  *         description: Invalid input
  *         content:
@@ -227,16 +236,16 @@ app.post(
 
     const id = getNextId();
 
-    console.log("next-id: " + id);
     const newUser = {
       id: id,
       name: req.body.name,
       email: req.body.email,
       age: req.body.age,
       role: req.body.role,
+      adult: isAdult(req.body.age),
     };
     users.push(newUser);
-    res.status(201).json(newUser);
+    return res.status(201).json(newUser);
   }
 );
 
@@ -297,6 +306,9 @@ app.post(
  *                   type: integer
  *                 role:
  *                   type: string
+ *                 adult:
+ *                   type: boolean
+ *                   description: Whether the user is an adult (18+)
  *       400:
  *         description: Invalid input
  *         content:
@@ -355,8 +367,9 @@ app.put(
     user.email = req.body.email || user.email;
     user.age = req.body.age || user.age;
     user.role = req.body.role || user.role;
+    user.adult = isAdult(user.age);
 
-    res.json(user);
+    return res.json(user);
   }
 );
 
@@ -430,6 +443,10 @@ app.get("/next-id", (req, res) => {
 
 const getNextId = () => {
   return users.length > 0 ? users[users.length - 1].id + 1 : 1;
+};
+
+const isAdult = (age) => {
+  return age >= 18;
 };
 
 // Start server
