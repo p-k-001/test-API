@@ -266,28 +266,28 @@ app.post(
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - name
- *               - email
- *               - age
- *               - role
  *             properties:
  *               name:
  *                 type: string
- *                 description: User's full name
+ *                 description: User's full name (optional)
  *               email:
  *                 type: string
  *                 format: email
- *                 description: User's email address
+ *                 description: User's email address (optional)
  *               age:
  *                 type: integer
  *                 minimum: 0
  *                 maximum: 125
- *                 description: User's age (0-125)
+ *                 description: User's age (0-125) (optional)
  *               role:
  *                 type: string
  *                 enum: [admin, user]
- *                 description: User's role (must be either admin or user)
+ *                 description: User's role (admin or user) (optional)
+ *             example:
+ *               name: John Doe
+ *               email: john@example.com
+ *               age: 30
+ *               role: user
  *     responses:
  *       200:
  *         description: User updated
@@ -338,6 +338,7 @@ app.post(
  *                   type: string
  *                   example: User not found
  */
+
 app.put(
   "/users/:id",
   [
