@@ -343,22 +343,22 @@ app.put(
   "/users/:id",
   [
     body("name")
-      .optional()
+      .optional({ checkFalsy: true })
       .isString()
       .notEmpty()
       .withMessage("Name is required"),
     body("email")
-      .optional()
+      .optional({ checkFalsy: true })
       .notEmpty()
       .withMessage("Email is required")
       .isEmail()
       .withMessage("Valid email format is required"),
     body("age")
-      .optional()
+      .optional({ nullable: true })
       .isInt({ min: 0, max: 125 })
       .withMessage("Age must be between 0 and 125"),
     body("role")
-      .optional()
+      .optional({ checkFalsy: true })
       .isIn(["admin", "user"])
       .withMessage("Role must be admin or user"),
   ],
