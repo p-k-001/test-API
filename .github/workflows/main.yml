@@ -78,7 +78,7 @@ jobs:
         run: npm run test:prod
 
   deploy:
-    needs: test # Run deployment only if tests pass
+    needs: test
     runs-on: ubuntu-latest
 
     # steps:
