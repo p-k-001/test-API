@@ -341,16 +341,23 @@ app.post(
 app.put(
   "/users/:id",
   [
-    body("name").isString().notEmpty().withMessage("Name is required"),
+    body("name")
+      .optional()
+      .isString()
+      .notEmpty()
+      .withMessage("Name is required"),
     body("email")
+      .optional()
       .notEmpty()
       .withMessage("Email is required")
       .isEmail()
       .withMessage("Valid email format is required"),
     body("age")
+      .optional()
       .isInt({ min: 0, max: 125 })
       .withMessage("Age must be between 0 and 125"),
     body("role")
+      .optional()
       .isIn(["admin", "user"])
       .withMessage("Role must be admin or user"),
   ],
@@ -363,10 +370,10 @@ app.put(
     const user = users.find((u) => u.id === parseInt(req.params.id));
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
-    user.age = req.body.age || user.age;
-    user.role = req.body.role || user.role;
+    if (req.body.name !== undefined) user.name = req.body.name;
+    if (req.body.email !== undefined) user.email = req.body.email;
+    if (req.body.age !== undefined) user.age = req.body.age;
+    if (req.body.role !== undefined) user.role = req.body.role;
     user.adult = isAdult(user.age);
 
     return res.json(user);
