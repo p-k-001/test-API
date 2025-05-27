@@ -27,8 +27,8 @@ jobs:
       - name: Install Newman html reporter
         run: npm install -g newman-reporter-html
 
-      # - name: Run Postman API Tests
-      #   run: newman run postman-tests/User-API-tst.postman_collection.json -e postman-tests/prod-environment.json
+      - name: Run Postman API Tests
+        run: newman run postman-tests/User-API-tst.postman_collection.json -e postman-tests/prod-environment.json
 
       - name: Install Java
         uses: actions/setup-java@v3
