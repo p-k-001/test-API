@@ -62,6 +62,21 @@ jobs:
         working-directory: rest-tests
         run: mvn clean test
 
+      - name: Checkout Playwright Tests Repo
+        uses: actions/checkout@v3
+        with:
+          repository: your-username/playwright-tests-repo
+          path: playwright-tests
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies for Playwright tests
+        working-directory: playwright-tests
+        run: npm ci
+
+      - name: Run Playwright tests
+        working-directory: playwright-tests
+        run: npm run test:prod
+
   deploy:
     needs: test # Run deployment only if tests pass
     runs-on: ubuntu-latest
