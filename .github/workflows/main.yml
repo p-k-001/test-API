@@ -65,7 +65,7 @@ jobs:
       - name: Checkout Playwright Tests Repo
         uses: actions/checkout@v3
         with:
-          repository: your-username/playwright-tests-repo
+          repository: p-k-001/test-api-playwright
           path: playwright-tests
           token: ${{ secrets.GITHUB_TOKEN }}
 
