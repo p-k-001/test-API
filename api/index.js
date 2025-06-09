@@ -1,12 +1,22 @@
+const envPath =
+  process.env.NODE_ENV === "production" ? ".env.production" : ".env.local";
+require("dotenv").config({ path: envPath });
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
 const { body, validationResult } = require("express-validator");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET;
+
+// auth
+// TODO: Replace this with a strong secret in real apps
+let usersAuth = []; // { id, email, passwordHash }
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -34,6 +44,19 @@ app.get("/api-docs/swagger.json", (req, res) => {
 });
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No token provided" });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ message: "Invalid token" });
+    req.user = user;
+    next();
+  });
+};
 
 let users = [
   // { id: 1, name: "John Doe", email: "john@example.com", age: 20, role: "admin" },
@@ -214,6 +237,7 @@ app.get("/users/:id", (req, res) => {
  */
 app.post(
   "/users",
+  authenticateToken,
   [
     body("name").isString().notEmpty().withMessage("Name is required"),
     body("email")
@@ -341,6 +365,7 @@ app.post(
 
 app.put(
   "/users/:id",
+  authenticateToken,
   [
     body("name")
       .optional({ checkFalsy: true })
@@ -406,7 +431,7 @@ app.put(
  *                   type: string
  *                   example: User not found
  */
-app.delete("/users/:id", (req, res) => {
+app.delete("/users/:id", authenticateToken, (req, res) => {
   const userIndex = users.findIndex((u) => u.id === parseInt(req.params.id));
   if (userIndex === -1)
     return res.status(404).json({ message: "User not found" });
@@ -424,7 +449,7 @@ app.delete("/users/:id", (req, res) => {
  *       204:
  *         description: All users deleted
  */
-app.delete("/users", (req, res) => {
+app.delete("/users", authenticateToken, (req, res) => {
   users = [];
   res.status(204).send();
 });
@@ -447,6 +472,82 @@ app.delete("/users", (req, res) => {
  */
 app.get("/next-id", (req, res) => {
   res.json({ "next-id": getNextId() });
+});
+
+/**
+ * @openapi
+ * /register:
+ *   post:
+ *     summary: Register a new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User registered
+ *       400:
+ *         description: Email already exists
+ */
+app.post("/register", async (req, res) => {
+  console.log(JWT_SECRET);
+  const { email, password } = req.body;
+  const existing = usersAuth.find((u) => u.email === email);
+  if (existing)
+    return res.status(400).json({ message: "Email already exists" });
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const newUser = { id: getNextId(), email, passwordHash };
+  usersAuth.push(newUser);
+
+  res.status(201).json({ message: "User registered" });
+});
+
+/**
+ * @openapi
+ * /login:
+ *   post:
+ *     summary: Login and get a token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Successful login
+ *       401:
+ *         description: Invalid credentials
+ */
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  const user = usersAuth.find((u) => u.email === email);
+  if (!user)
+    return res.status(401).json({ message: "Invalid email or password" });
+
+  const match = await bcrypt.compare(password, user.passwordHash);
+  if (!match)
+    return res.status(401).json({ message: "Invalid email or password" });
+
+  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
+    expiresIn: "1h",
+  });
+  res.json({ token });
 });
 
 const getNextId = () => {
