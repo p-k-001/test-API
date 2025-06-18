@@ -109,6 +109,8 @@ app.get("/hello", (req, res) => {
  */
 app.get("/users", (req, res) => {
   res.json(users);
+  // console.log(users);
+  // console.log(usersAuth);
 });
 
 /**
@@ -498,8 +500,10 @@ app.get("/next-id", (req, res) => {
  *         description: Email already exists
  */
 app.post("/register", async (req, res) => {
-  console.log(JWT_SECRET);
   const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
   const existing = usersAuth.find((u) => u.email === email);
   if (existing)
     return res.status(400).json({ message: "Email already exists" });
@@ -536,6 +540,9 @@ app.post("/register", async (req, res) => {
  */
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
   const user = usersAuth.find((u) => u.email === email);
   if (!user)
     return res.status(401).json({ message: "Invalid email or password" });
