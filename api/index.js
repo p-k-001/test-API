@@ -9,14 +9,11 @@ const swaggerJsdoc = require("swagger-jsdoc");
 const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const prisma = require("../prismaClient");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
-
-// auth
-// TODO: Replace this with a strong secret in real apps
-let usersAuth = []; // { id, email, passwordHash }
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -58,12 +55,6 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
-
-let users = [
-  // { id: 1, name: "John Doe", email: "john@example.com", age: 20, role: "admin" },
-  // { id: 2, name: "Jane Smith", email: "jane@example.com", age: 31, role: "guest" },
-  // { id: 2, name: "Adam Black", email: "adam@example.com", age: 15, role: "user" },
-];
 
 /**
  * @openapi
@@ -108,10 +99,14 @@ app.get("/hello", (req, res) => {
  *                     type: boolean
  *                     description: Whether the user is an adult (18+)
  */
-app.get("/users", (req, res) => {
-  res.json(users);
-  // console.log(users);
-  // console.log(usersAuth);
+app.get("/users", async (req, res) => {
+  try {
+    const users = await prisma.user.findMany();
+    res.json(users);
+  } catch (err) {
+    console.error("Failed to fetch users:", err);
+    res.status(500).json({ message: "Failed to fetch users" });
+  }
 });
 
 /**
@@ -159,10 +154,18 @@ app.get("/users", (req, res) => {
  *                   type: string
  *                   example: User not found
  */
-app.get("/users/:id", (req, res) => {
-  const user = users.find((user) => user.id === parseInt(req.params.id));
-  if (!user) return res.status(404).json({ message: "User not found" });
-  res.json(user);
+app.get("/users/:id", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (err) {
+    console.error("Failed to fetch user:", err);
+    res.status(500).json({ message: "Failed to fetch user" });
+  }
 });
 
 /**
@@ -255,24 +258,25 @@ app.post(
       .isIn(["admin", "user"])
       .withMessage("Role must be admin or user"),
   ],
-  (req, res) => {
+  async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-
-    const id = getNextId();
+    const age = parseInt(req.body.age, 10);
 
     const newUser = {
-      id: id,
       name: req.body.name,
       email: req.body.email,
-      age: req.body.age,
+      age: age,
       role: req.body.role,
       adult: isAdult(req.body.age),
     };
-    users.push(newUser);
-    return res.status(201).json(newUser);
+
+    // I need id from db
+    const newUserFromDb = await prisma.user.create({ data: newUser });
+
+    return res.status(201).json(newUserFromDb);
   }
 );
 
@@ -390,22 +394,35 @@ app.put(
       .isIn(["admin", "user"])
       .withMessage("Role must be admin or user"),
   ],
-  (req, res) => {
+  async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const user = users.find((u) => u.id === parseInt(req.params.id));
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const updateData = {};
+    if (req.body.name !== undefined) updateData.name = req.body.name;
+    if (req.body.email !== undefined) updateData.email = req.body.email;
+    if (req.body.age !== undefined) updateData.age = parseInt(req.body.age, 10);
+    if (req.body.role !== undefined) updateData.role = req.body.role;
+    updateData.adult = isAdult(updateData.age);
 
-    if (req.body.name !== undefined) user.name = req.body.name;
-    if (req.body.email !== undefined) user.email = req.body.email;
-    if (req.body.age !== undefined) user.age = req.body.age;
-    if (req.body.role !== undefined) user.role = req.body.role;
-    user.adult = isAdult(user.age);
-
-    return res.json(user);
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id },
+        data: updateData,
+      });
+      res.json(updatedUser);
+    } catch (err) {
+      if (err.code === "P2025") {
+        return res.status(404).json({ message: "User not found" });
+      }
+      console.error("Failed to update user:", err);
+      res.status(500).json({ message: "Failed to update user" });
+    }
   }
 );
 
@@ -434,13 +451,20 @@ app.put(
  *                   type: string
  *                   example: User not found
  */
-app.delete("/users/:id", authenticateToken, (req, res) => {
-  const userIndex = users.findIndex((u) => u.id === parseInt(req.params.id));
-  if (userIndex === -1)
-    return res.status(404).json({ message: "User not found" });
+app.delete("/users/:id", authenticateToken, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
 
-  users.splice(userIndex, 1);
-  res.status(204).send();
+  try {
+    await prisma.user.delete({ where: { id } });
+    res.status(204).send();
+  } catch (err) {
+    if (err.code === "P2025") {
+      return res.status(404).json({ message: "User not found" });
+    }
+    console.error("Failed to delete user:", err);
+    res.status(500).json({ message: "Failed to delete user" });
+  }
 });
 
 /**
@@ -452,29 +476,14 @@ app.delete("/users/:id", authenticateToken, (req, res) => {
  *       204:
  *         description: All users deleted
  */
-app.delete("/users", authenticateToken, (req, res) => {
-  users = [];
-  res.status(204).send();
-});
-
-/**
- * @openapi
- * /next-id:
- *   get:
- *     summary: Get next id
- *     responses:
- *       200:
- *         description: Success
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 next-id:
- *                   type: integer
- */
-app.get("/next-id", (req, res) => {
-  res.json({ "next-id": getNextId() });
+app.delete("/users", authenticateToken, async (req, res) => {
+  try {
+    await prisma.user.deleteMany();
+    res.status(204).send();
+  } catch (err) {
+    console.error("Failed to delete all users:", err);
+    res.status(500).json({ message: "Failed to delete all users" });
+  }
 });
 
 /**
@@ -505,15 +514,26 @@ app.post("/register", async (req, res) => {
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
   }
-  const existing = usersAuth.find((u) => u.email === email);
-  if (existing)
-    return res.status(400).json({ message: "Email already exists" });
 
-  const passwordHash = await bcrypt.hash(password, 10);
-  const newUser = { id: getNextId(), email, passwordHash };
-  usersAuth.push(newUser);
+  try {
+    const existing = await prisma.authUser.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
 
-  res.status(201).json({ message: "User registered" });
+    const passwordHash = await bcrypt.hash(password, 10);
+    await prisma.authUser.create({
+      data: {
+        email,
+        passwordHash,
+      },
+    });
+
+    res.status(201).json({ message: "User registered" });
+  } catch (err) {
+    console.error("Registration error:", err);
+    res.status(500).json({ message: "Registration failed" });
+  }
 });
 
 /**
@@ -544,23 +564,25 @@ app.post("/login", async (req, res) => {
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
   }
-  const user = usersAuth.find((u) => u.email === email);
-  if (!user)
-    return res.status(401).json({ message: "Invalid email or password" });
 
-  const match = await bcrypt.compare(password, user.passwordHash);
-  if (!match)
-    return res.status(401).json({ message: "Invalid email or password" });
+  try {
+    const user = await prisma.authUser.findUnique({ where: { email } });
+    if (!user)
+      return res.status(401).json({ message: "Invalid email or password" });
 
-  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
-    expiresIn: "1h",
-  });
-  res.json({ token });
+    const match = await bcrypt.compare(password, user.passwordHash);
+    if (!match)
+      return res.status(401).json({ message: "Invalid email or password" });
+
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    res.json({ token });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Login failed" });
+  }
 });
-
-const getNextId = () => {
-  return users.length > 0 ? users[users.length - 1].id + 1 : 1;
-};
 
 const isAdult = (age) => {
   return age >= 18;
