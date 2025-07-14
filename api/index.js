@@ -1,12 +1,19 @@
+const envPath =
+  process.env.NODE_ENV === "production" ? ".env.production" : ".env.local";
+require("dotenv").config({ path: envPath });
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
 const { body, validationResult } = require("express-validator");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const prisma = require("../prismaClient");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -35,11 +42,19 @@ app.get("/api-docs/swagger.json", (req, res) => {
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-let users = [
-  // { id: 1, name: "John Doe", email: "john@example.com", age: 20, role: "admin" },
-  // { id: 2, name: "Jane Smith", email: "jane@example.com", age: 31, role: "guest" },
-  // { id: 2, name: "Adam Black", email: "adam@example.com", age: 15, role: "user" },
-];
+// authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No token provided" });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err)
+      return res.status(403).json({ errors: { message: "Invalid token" } });
+    req.user = user;
+    next();
+  });
+};
 
 /**
  * @openapi
@@ -84,8 +99,14 @@ app.get("/hello", (req, res) => {
  *                     type: boolean
  *                     description: Whether the user is an adult (18+)
  */
-app.get("/users", (req, res) => {
-  res.json(users);
+app.get("/users", async (req, res) => {
+  try {
+    const users = await prisma.user.findMany();
+    res.json(users);
+  } catch (err) {
+    console.error("Failed to fetch users:", err);
+    res.status(500).json({ message: "Failed to fetch users" });
+  }
 });
 
 /**
@@ -133,10 +154,18 @@ app.get("/users", (req, res) => {
  *                   type: string
  *                   example: User not found
  */
-app.get("/users/:id", (req, res) => {
-  const user = users.find((user) => user.id === parseInt(req.params.id));
-  if (!user) return res.status(404).json({ message: "User not found" });
-  res.json(user);
+app.get("/users/:id", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (err) {
+    console.error("Failed to fetch user:", err);
+    res.status(500).json({ message: "Failed to fetch user" });
+  }
 });
 
 /**
@@ -214,6 +243,7 @@ app.get("/users/:id", (req, res) => {
  */
 app.post(
   "/users",
+  authenticateToken,
   [
     body("name").isString().notEmpty().withMessage("Name is required"),
     body("email")
@@ -228,24 +258,25 @@ app.post(
       .isIn(["admin", "user"])
       .withMessage("Role must be admin or user"),
   ],
-  (req, res) => {
+  async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-
-    const id = getNextId();
+    const age = parseInt(req.body.age, 10);
 
     const newUser = {
-      id: id,
       name: req.body.name,
       email: req.body.email,
-      age: req.body.age,
+      age: age,
       role: req.body.role,
-      adult: isAdult(req.body.age),
+      adult: isAdult(age),
     };
-    users.push(newUser);
-    return res.status(201).json(newUser);
+
+    // I need id from db
+    const newUserFromDb = await prisma.user.create({ data: newUser });
+
+    return res.status(201).json(newUserFromDb);
   }
 );
 
@@ -341,6 +372,7 @@ app.post(
 
 app.put(
   "/users/:id",
+  authenticateToken,
   [
     body("name")
       .optional({ checkFalsy: true })
@@ -362,22 +394,37 @@ app.put(
       .isIn(["admin", "user"])
       .withMessage("Role must be admin or user"),
   ],
-  (req, res) => {
+  async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const user = users.find((u) => u.id === parseInt(req.params.id));
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const updateData = {};
+    if (req.body.name !== undefined) updateData.name = req.body.name;
+    if (req.body.email !== undefined) updateData.email = req.body.email;
+    if (req.body.age !== undefined) updateData.age = parseInt(req.body.age, 10);
+    if (req.body.role !== undefined) updateData.role = req.body.role;
+    if (updateData.age !== undefined) {
+      updateData.adult = isAdult(updateData.age);
+    }
 
-    if (req.body.name !== undefined) user.name = req.body.name;
-    if (req.body.email !== undefined) user.email = req.body.email;
-    if (req.body.age !== undefined) user.age = req.body.age;
-    if (req.body.role !== undefined) user.role = req.body.role;
-    user.adult = isAdult(user.age);
-
-    return res.json(user);
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id },
+        data: updateData,
+      });
+      res.json(updatedUser);
+    } catch (err) {
+      if (err.code === "P2025") {
+        return res.status(404).json({ message: "User not found" });
+      }
+      console.error("Failed to update user:", err);
+      res.status(500).json({ message: "Failed to update user" });
+    }
   }
 );
 
@@ -406,13 +453,20 @@ app.put(
  *                   type: string
  *                   example: User not found
  */
-app.delete("/users/:id", (req, res) => {
-  const userIndex = users.findIndex((u) => u.id === parseInt(req.params.id));
-  if (userIndex === -1)
-    return res.status(404).json({ message: "User not found" });
+app.delete("/users/:id", authenticateToken, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
 
-  users.splice(userIndex, 1);
-  res.status(204).send();
+  try {
+    await prisma.user.delete({ where: { id } });
+    res.status(204).send();
+  } catch (err) {
+    if (err.code === "P2025") {
+      return res.status(404).json({ message: "User not found" });
+    }
+    console.error("Failed to delete user:", err);
+    res.status(500).json({ message: "Failed to delete user" });
+  }
 });
 
 /**
@@ -424,34 +478,114 @@ app.delete("/users/:id", (req, res) => {
  *       204:
  *         description: All users deleted
  */
-app.delete("/users", (req, res) => {
-  users = [];
-  res.status(204).send();
+app.delete("/users", authenticateToken, async (req, res) => {
+  try {
+    await prisma.user.deleteMany();
+    res.status(204).send();
+  } catch (err) {
+    console.error("Failed to delete all users:", err);
+    res.status(500).json({ message: "Failed to delete all users" });
+  }
 });
 
 /**
  * @openapi
- * /next-id:
- *   get:
- *     summary: Get next id
+ * /register:
+ *   post:
+ *     summary: Register a new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
  *     responses:
- *       200:
- *         description: Success
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 next-id:
- *                   type: integer
+ *       201:
+ *         description: User registered
+ *       400:
+ *         description: Email already exists
  */
-app.get("/next-id", (req, res) => {
-  res.json({ "next-id": getNextId() });
+//TODO: Add a confirmation header like X-Confirm-Delete: true
+app.post("/register", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
+  try {
+    const existing = await prisma.authUser.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    await prisma.authUser.create({
+      data: {
+        email,
+        passwordHash,
+      },
+    });
+
+    res.status(201).json({ message: "User registered", email });
+  } catch (err) {
+    console.error("Registration error:", err);
+    res.status(500).json({ message: "Registration failed" });
+  }
 });
 
-const getNextId = () => {
-  return users.length > 0 ? users[users.length - 1].id + 1 : 1;
-};
+/**
+ * @openapi
+ * /login:
+ *   post:
+ *     summary: Login and get a token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Successful login
+ *       401:
+ *         description: Invalid credentials
+ */
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
+  try {
+    const user = await prisma.authUser.findUnique({ where: { email } });
+    if (!user)
+      return res.status(401).json({ message: "Invalid email or password" });
+
+    const match = await bcrypt.compare(password, user.passwordHash);
+    if (!match)
+      return res.status(401).json({ message: "Invalid email or password" });
+
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    res.json({ token });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Login failed" });
+  }
+});
 
 const isAdult = (age) => {
   return age >= 18;
