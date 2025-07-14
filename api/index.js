@@ -270,7 +270,7 @@ app.post(
       email: req.body.email,
       age: age,
       role: req.body.role,
-      adult: isAdult(req.body.age),
+      adult: isAdult(age),
     };
 
     // I need id from db
@@ -408,7 +408,9 @@ app.put(
     if (req.body.email !== undefined) updateData.email = req.body.email;
     if (req.body.age !== undefined) updateData.age = parseInt(req.body.age, 10);
     if (req.body.role !== undefined) updateData.role = req.body.role;
-    updateData.adult = isAdult(updateData.age);
+    if (updateData.age !== undefined) {
+      updateData.adult = isAdult(updateData.age);
+    }
 
     try {
       const updatedUser = await prisma.user.update({
@@ -509,6 +511,7 @@ app.delete("/users", authenticateToken, async (req, res) => {
  *       400:
  *         description: Email already exists
  */
+//TODO: Add a confirmation header like X-Confirm-Delete: true
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -529,7 +532,7 @@ app.post("/register", async (req, res) => {
       },
     });
 
-    res.status(201).json({ message: "User registered" });
+    res.status(201).json({ message: "User registered", email });
   } catch (err) {
     console.error("Registration error:", err);
     res.status(500).json({ message: "Registration failed" });
