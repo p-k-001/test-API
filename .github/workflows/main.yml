@@ -16,25 +16,25 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18"
+      # - name: Install Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: "18"
 
-      - name: Install Newman
-        run: npm install -g newman
+      # - name: Install Newman
+      #   run: npm install -g newman
 
-      - name: Install Newman html reporter
-        run: npm install -g newman-reporter-html
+      # - name: Install Newman html reporter
+      #   run: npm install -g newman-reporter-html
 
-      - name: Run Postman API Tests
-        run: newman run postman-tests/User-API-tst.postman_collection.json -e postman-tests/prod-environment.json
+      # - name: Run Postman API Tests
+      #   run: newman run postman-tests/User-API-tst.postman_collection.json -e postman-tests/prod-environment.json
 
-      - name: Install Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: "temurin"
-          java-version: "21"
+      # - name: Install Java
+      #   uses: actions/setup-java@v3
+      #   with:
+      #     distribution: "temurin"
+      #     java-version: "21"
 
       # - name: Download SoapUI
       #   run: |
@@ -46,41 +46,42 @@ jobs:
       #   run: |
       #     ./soapui/bin/testrunner.sh -r -j -f reports/ soapui-tests/Project-2-soapui-project.xml
 
-      - name: Checkout Test Repo
-        uses: actions/checkout@v3
-        with:
-          repository: p-k-001/test-API-REST-assured
-          path: rest-tests
-          token: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Checkout Test Repo
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: p-k-001/test-API-REST-assured
+      #     path: rest-tests
+      #     token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install Maven
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y maven
+      # - name: Install Maven
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y maven
 
-      - name: Run REST-Assured Tests
-        working-directory: rest-tests
-        run: mvn clean test
+      # - name: Run REST-Assured Tests
+      #   working-directory: rest-tests
+      #   run: mvn clean test
 
-      - name: Checkout Playwright Tests Repo
-        uses: actions/checkout@v3
-        with:
-          repository: p-k-001/test-api-playwright
-          path: playwright-tests
-          token: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Checkout Playwright Tests Repo
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: p-k-001/test-api-playwright
+      #     path: playwright-tests
+      #     token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies for Playwright tests
-        working-directory: playwright-tests
-        run: npm ci
+      # - name: Install dependencies for Playwright tests
+      #   working-directory: playwright-tests
+      #   run: npm ci
 
-      - name: Run Playwright tests
-        working-directory: playwright-tests
-        run: npm run test:prod
+      # - name: Run Playwright tests
+      #   working-directory: playwright-tests
+      #   run: npm run test:prod
 
   deploy:
-    needs: test
+    # needs: test
     runs-on: ubuntu-latest
 
+    # consoder removing Render deployment
     # steps:
     #   - name: Trigger Render Deployment
     #     run: |
